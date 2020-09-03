@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 public class CabValidationException extends BaseCabsException {
+
     public CabValidationException() {}
 
     public CabValidationException(@NotNull final String message) {

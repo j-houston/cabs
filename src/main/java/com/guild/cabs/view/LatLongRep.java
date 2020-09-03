@@ -2,13 +2,12 @@ package com.guild.cabs.view;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.jetbrains.annotations.Nullable;
 
 @ApiModel(description = "Basic container of a geospatial location")
 public class LatLongRep extends AbstractRep {
 
-    private Double _latitude;
-    private Double _longitude;
+    private double _latitude;
+    private double _longitude;
 
     public LatLongRep() {
         super();
@@ -23,20 +22,20 @@ public class LatLongRep extends AbstractRep {
     }
 
     @ApiModelProperty(notes = "Geolocation component: latitude")
-    public @Nullable Double getLatitude() {
+    public double getLatitude() {
         return _latitude;
     }
 
-    public void setLatitude(final @Nullable Double latitude) {
+    public void setLatitude(final double latitude) {
         _latitude = latitude;
     }
 
     @ApiModelProperty(notes = "Geolocation component: longitude")
-    public @Nullable Double getLongitude() {
+    public double getLongitude() {
         return _longitude;
     }
 
-    public void setLongitude(final @Nullable Double longitude) {
+    public void setLongitude(final double longitude) {
         _longitude = longitude;
     }
 }
