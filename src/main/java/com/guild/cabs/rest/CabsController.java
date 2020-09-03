@@ -2,9 +2,11 @@ package com.guild.cabs.rest;
 
 import com.guild.cabs.exceptions.CabNotFoundException;
 import com.guild.cabs.exceptions.CabValidationException;
+import com.guild.cabs.exceptions.InvalidCabSearchException;
 import com.guild.cabs.handlers.ICabHandler;
 import com.guild.cabs.view.CabRep;
 import com.guild.cabs.view.CabSearchInputRep;
+import com.guild.cabs.view.CabsPageRep;
 import com.guild.cabs.view.LatLongRep;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -43,15 +45,15 @@ public class CabsController {
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "The requested cabs that meet the expected criteria."),
     })
-    public ResponseEntity<CabRep[]> searchCabs(
+    public ResponseEntity<CabsPageRep> searchCabs(
         @ApiParam(
             value = "Complete list of all of the search criteria that can be added the request "
                 + "as request parameters (no bodies on GETs).",
             required = false
         ) final CabSearchInputRep searchCriteria
-    ) {
-        final CabRep[] foundCabs = _cabHandler.searchCabs(searchCriteria);
-        return new ResponseEntity<CabRep[]>(
+    ) throws InvalidCabSearchException {
+        final CabsPageRep foundCabs = _cabHandler.searchCabs(searchCriteria);
+        return new ResponseEntity<CabsPageRep>(
             foundCabs,
             HttpStatus.OK
         );
@@ -125,7 +127,8 @@ public class CabsController {
                 + "the ID given in the URL path.",
             required = true
         ) @RequestBody final CabRep cabInput
-    ) throws CabNotFoundException, CabValidationException {
+    ) throws CabNotFoundException,
+        CabValidationException {
         cabInput.setId(cabId);
         final CabRep updatedCab = _cabHandler.updateCab(cabInput);
 

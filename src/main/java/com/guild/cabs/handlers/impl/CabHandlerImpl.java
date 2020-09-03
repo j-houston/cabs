@@ -2,12 +2,14 @@ package com.guild.cabs.handlers.impl;
 
 import com.guild.cabs.exceptions.CabNotFoundException;
 import com.guild.cabs.exceptions.CabValidationException;
+import com.guild.cabs.exceptions.InvalidCabSearchException;
 import com.guild.cabs.handlers.ICabHandler;
 import com.guild.cabs.model.CabModel;
 import com.guild.cabs.persistence.ICabRepository;
 import com.guild.cabs.persistence.search.CabSearchSpecification;
 import com.guild.cabs.view.CabRep;
 import com.guild.cabs.view.CabSearchInputRep;
+import com.guild.cabs.view.CabsPageRep;
 import com.guild.cabs.view.LatLongRep;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +50,8 @@ public class CabHandlerImpl implements ICabHandler {
 
     @Override
     public void destroyCab(@NotNull final String cabId) {
-        _cabRepository.deleteById(cabId);
+        final Optional<CabModel> optCab = _cabRepository.findById(cabId);
+        optCab.ifPresent(_cabRepository::delete);
     }
 
     @Override
@@ -74,16 +77,17 @@ public class CabHandlerImpl implements ICabHandler {
         );
     }
 
-    public @NotNull CabRep[] modelsToReps(@NotNull final List<CabModel> cabModels) {
+    public @NotNull CabsPageRep modelsToReps(@NotNull final List<CabModel> cabModels) {
         final List<CabRep> cabReps = new ArrayList<CabRep>(cabModels.size());
         for (CabModel cabModel : cabModels) {
             cabReps.add(modelToRep(cabModel));
         }
-        return cabReps.toArray(new CabRep[0]);
+        return new CabsPageRep(cabReps);
     }
 
     @Override
-    public @NotNull CabRep[] searchCabs(@NotNull final CabSearchInputRep searchCriteria) {
+    public @NotNull CabsPageRep searchCabs(@NotNull final CabSearchInputRep searchCriteria)
+        throws InvalidCabSearchException {
         validateSearchCriteria(searchCriteria);
 
         final Specification<CabModel> searchSpecification = CabSearchSpecification.fromSearchCriteria(searchCriteria);
@@ -100,7 +104,8 @@ public class CabHandlerImpl implements ICabHandler {
     }
 
     @Override
-    public @NotNull CabRep updateCab(@NotNull final CabRep cabInput) throws CabNotFoundException, CabValidationException {
+    public @NotNull CabRep updateCab(@NotNull final CabRep cabInput) throws CabNotFoundException,
+        CabValidationException {
         final CabModel existingModel = getCabModelOrThrow(cabInput.getId());
         existingModel.setLatitude(cabInput.getLatitude());
         existingModel.setLongitude(cabInput.getLongitude());
@@ -115,23 +120,44 @@ public class CabHandlerImpl implements ICabHandler {
 
     public void validateCabModel(@NotNull final CabModel cabInput) throws CabValidationException {
         final Double latitude = cabInput.getLatitude();
-        if((latitude == null) || (latitude > 90) || (latitude < -90)) {
+        if ((latitude == null) || (latitude > 90) || (latitude < -90)) {
             throw new CabValidationException(
-                String.format("latitude [%s] was not between +90 and -90", latitude)
+                String.format(
+                    "latitude [%s] was not between +90 and -90",
+                    latitude
+                )
             );
         }
 
         final Double longitude = cabInput.getLongitude();
-        if((longitude == null) || (longitude > 180) || (longitude < -180)) {
+        if ((longitude == null) || (longitude > 180) || (longitude < -180)) {
             throw new CabValidationException(
-                String.format("longitude [%s] was not between +180 and -180", latitude)
+                String.format(
+                    "longitude [%s] was not between +180 and -180",
+                    latitude
+                )
             );
         }
-
-
     }
 
-    public void validateSearchCriteria(@NotNull final CabSearchInputRep searchCriteria) {
-        // TODO:
+    public void validateSearchCriteria(@NotNull final CabSearchInputRep searchCriteria)
+        throws InvalidCabSearchException {
+        final double latitude = searchCriteria.getLatitude();
+        if ((latitude > 90) || (latitude < -90)) {
+            throw new InvalidCabSearchException(searchCriteria);
+        }
+
+        final double longitude = searchCriteria.getLongitude();
+        if ((longitude > 180) || (longitude < -180)) {
+            throw new InvalidCabSearchException(searchCriteria);
+        }
+
+        if (searchCriteria.getRadius() < 0) {
+            throw new InvalidCabSearchException(searchCriteria);
+        }
+
+        if (searchCriteria.getLimit() < 0) {
+            throw new InvalidCabSearchException(searchCriteria);
+        }
     }
 }
